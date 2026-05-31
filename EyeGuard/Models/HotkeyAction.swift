@@ -22,17 +22,17 @@ enum HotkeyAction: String, CaseIterable, Codable, Identifiable {
         case .takeBreak:
             return KeyCombo(
                 keyCode: UInt32(kVK_ANSI_B),
-                carbonModifiers: KeyCombo.carbonCmd | KeyCombo.carbonShift
+                carbonModifiers: KeyCombo.carbonControl | KeyCombo.carbonOption
             )
         case .togglePause:
             return KeyCombo(
                 keyCode: UInt32(kVK_ANSI_P),
-                carbonModifiers: KeyCombo.carbonCmd | KeyCombo.carbonShift
+                carbonModifiers: KeyCombo.carbonControl | KeyCombo.carbonOption
             )
         case .skipBreak:
             return KeyCombo(
                 keyCode: UInt32(kVK_ANSI_S),
-                carbonModifiers: KeyCombo.carbonCmd | KeyCombo.carbonShift
+                carbonModifiers: KeyCombo.carbonControl | KeyCombo.carbonOption
             )
         }
     }

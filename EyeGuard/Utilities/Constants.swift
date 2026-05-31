@@ -6,7 +6,7 @@ enum Constants {
         static let defaultBreakDuration: TimeInterval = 20       // 20 seconds
         static let defaultIdleThreshold: TimeInterval = 5 * 60  // 5 minutes
         static let idlePollInterval: TimeInterval = 30
-        static let persistInterval: TimeInterval = 10
+        static let persistInterval: TimeInterval = 30
 
         // Pomodoro defaults
         static let defaultPomodoroWorkInterval: TimeInterval = 25 * 60  // 25 min
@@ -23,7 +23,6 @@ enum Constants {
         static let soundEnabled = "soundEnabled"
         static let notificationEnabled = "notificationEnabled"
         static let launchAtLogin = "launchAtLogin"
-        static let respectDND = "respectDND"
         static let elapsedWorkTime = "elapsedWorkTime"
         static let tipIndex = "tipIndex"
         static let overlayTheme = "overlayTheme"

@@ -47,10 +47,6 @@ final class AppSettings {
         didSet { persist(launchAtLogin, forKey: Constants.UserDefaultsKeys.launchAtLogin) }
     }
 
-    var respectDND: Bool {
-        didSet { persist(respectDND, forKey: Constants.UserDefaultsKeys.respectDND) }
-    }
-
     var overlayTheme: OverlayTheme {
         didSet { persist(overlayTheme.rawValue, forKey: Constants.UserDefaultsKeys.overlayTheme) }
     }
@@ -80,7 +76,10 @@ final class AppSettings {
     }
 
     var snoozeDuration: TimeInterval {
-        didSet { persist(snoozeDuration, forKey: Constants.UserDefaultsKeys.snoozeDuration) }
+        didSet {
+            if snoozeDuration < 1 { snoozeDuration = 1; return }
+            persist(snoozeDuration, forKey: Constants.UserDefaultsKeys.snoozeDuration)
+        }
     }
 
     var showOverlayElements: Bool {
@@ -94,15 +93,24 @@ final class AppSettings {
     }
 
     var pomodoroWorkInterval: TimeInterval {
-        didSet { persist(pomodoroWorkInterval, forKey: Constants.UserDefaultsKeys.pomodoroWorkInterval) }
+        didSet {
+            if pomodoroWorkInterval < 1 { pomodoroWorkInterval = 1; return }
+            persist(pomodoroWorkInterval, forKey: Constants.UserDefaultsKeys.pomodoroWorkInterval)
+        }
     }
 
     var pomodoroShortBreak: TimeInterval {
-        didSet { persist(pomodoroShortBreak, forKey: Constants.UserDefaultsKeys.pomodoroShortBreak) }
+        didSet {
+            if pomodoroShortBreak < 1 { pomodoroShortBreak = 1; return }
+            persist(pomodoroShortBreak, forKey: Constants.UserDefaultsKeys.pomodoroShortBreak)
+        }
     }
 
     var pomodoroLongBreak: TimeInterval {
-        didSet { persist(pomodoroLongBreak, forKey: Constants.UserDefaultsKeys.pomodoroLongBreak) }
+        didSet {
+            if pomodoroLongBreak < 1 { pomodoroLongBreak = 1; return }
+            persist(pomodoroLongBreak, forKey: Constants.UserDefaultsKeys.pomodoroLongBreak)
+        }
     }
 
     var pomodoroSessionsBeforeLongBreak: Int {
@@ -159,7 +167,6 @@ final class AppSettings {
         self.soundEnabled = defaults.object(forKey: Constants.UserDefaultsKeys.soundEnabled) as? Bool ?? true
         self.notificationEnabled = defaults.object(forKey: Constants.UserDefaultsKeys.notificationEnabled) as? Bool ?? true
         self.launchAtLogin = defaults.object(forKey: Constants.UserDefaultsKeys.launchAtLogin) as? Bool ?? false
-        self.respectDND = defaults.object(forKey: Constants.UserDefaultsKeys.respectDND) as? Bool ?? true
         self.overlayTheme = OverlayTheme(rawValue:
             defaults.string(forKey: Constants.UserDefaultsKeys.overlayTheme) ?? "") ?? .minimal
         self.breakStartSound = BreakSound(rawValue:

@@ -14,18 +14,8 @@ struct DailyChartView: View {
         let date: Date
     }
 
-    private var chartData: [DayData] {
-        let cal = Calendar.current
-        let today = Date().startOfDay
-        return (0..<7).reversed().map { daysAgo in
-            let day = cal.date(byAdding: .day, value: -daysAgo, to: today)!
-            let daySessions = sessions.filter { cal.isDate($0.scheduledAt, inSameDayAs: day) }
-            let taken = daySessions.filter { !$0.wasSkipped }.count
-            let skipped = daySessions.filter { $0.wasSkipped }.count
-            let label = daysAgo == 0 ? "Today" : cal.shortWeekdaySymbols[cal.component(.weekday, from: day) - 1]
-            return DayData(label: label, taken: taken, skipped: skipped, date: day)
-        }
-    }
+    /// Cached chart data — recomputed only when sessions change, not on every view evaluation.
+    @State private var chartData: [DayData] = []
 
     var body: some View {
         Chart {
@@ -58,6 +48,21 @@ struct DailyChartView: View {
             .font(.caption)
         }
         .frame(height: 160)
+        .onAppear { chartData = computeChartData() }
+        .onChange(of: sessions.count) { chartData = computeChartData() }
+    }
+
+    private func computeChartData() -> [DayData] {
+        let cal = Calendar.current
+        let today = Date().startOfDay
+        return (0..<7).reversed().map { daysAgo in
+            let day = cal.date(byAdding: .day, value: -daysAgo, to: today)!
+            let daySessions = sessions.filter { cal.isDate($0.scheduledAt, inSameDayAs: day) }
+            let taken = daySessions.filter { !$0.wasSkipped }.count
+            let skipped = daySessions.filter { $0.wasSkipped }.count
+            let label = daysAgo == 0 ? "Today" : cal.shortWeekdaySymbols[cal.component(.weekday, from: day) - 1]
+            return DayData(label: label, taken: taken, skipped: skipped, date: day)
+        }
     }
 
     private func legendItem(color: Color, label: String) -> some View {

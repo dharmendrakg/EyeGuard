@@ -38,8 +38,7 @@ private func makeTimerService(
     settings: AppSettings,
     sound: MockSoundManager,
     overlay: MockOverlayManager,
-    notifications: MockNotificationManager,
-    dnd: MockDNDObserver
+    notifications: MockNotificationManager
 ) {
     // Use a per-call isolated suite so tests cannot pollute each other via UserDefaults.standard
     let suiteName = "com.eyeguard.tests.\(UUID().uuidString)"
@@ -54,7 +53,6 @@ private func makeTimerService(
     let sound         = MockSoundManager()
     let overlay       = MockOverlayManager()
     let notifications = MockNotificationManager()
-    let dnd           = MockDNDObserver()
     let idleDetector  = StubIdleDetector()
 
     let service = TimerService()
@@ -63,12 +61,11 @@ private func makeTimerService(
         overlayManager: overlay,
         soundManager: sound,
         notificationManager: notifications,
-        dndObserver: dnd,
         modelContext: modelContext,
         idleDetector: idleDetector,
         defaults: testDefaults
     ))
-    return (service, settings, sound, overlay, notifications, dnd)
+    return (service, settings, sound, overlay, notifications)
 }
 
 // MARK: - Tests
@@ -80,7 +77,7 @@ struct TimerServiceTests {
 
     @Test func testStartSetsWorkingState() throws {
         let ctx = try makeTestModelContext()
-        let (service, _, _, _, _, _) = makeTimerService(modelContext: ctx)
+        let (service, _, _, _, _) = makeTimerService(modelContext: ctx)
         service.start()
         #expect(service.state == .working)
         service.stop()
@@ -90,7 +87,7 @@ struct TimerServiceTests {
 
     @Test func testWorkProgressDecreasesOverTime() async throws {
         let ctx = try makeTestModelContext()
-        let (service, settings, _, _, _, _) = makeTimerService(workInterval: 60, modelContext: ctx)
+        let (service, settings, _, _, _) = makeTimerService(workInterval: 60, modelContext: ctx)
         service.start()
         let initial = service.timeUntilBreak
         // Wait for a couple of timer ticks (timer fires every 1 s)
@@ -104,7 +101,7 @@ struct TimerServiceTests {
     @Test func testBreakTriggersWhenTimerReachesZero() async throws {
         let ctx = try makeTestModelContext()
         // Use a 2-second work interval so the break fires quickly
-        let (service, _, _, _, _, _) = makeTimerService(workInterval: 2, modelContext: ctx)
+        let (service, _, _, _, _) = makeTimerService(workInterval: 2, modelContext: ctx)
         service.start()
         try await Task.sleep(for: .seconds(3.5))
         #expect(service.state == .onBreak)
@@ -115,7 +112,7 @@ struct TimerServiceTests {
 
     @Test func testSkipBreakResetsTimer() throws {
         let ctx = try makeTestModelContext()
-        let (service, settings, _, _, _, _) = makeTimerService(modelContext: ctx)
+        let (service, settings, _, _, _) = makeTimerService(modelContext: ctx)
         service.start()
         service.takeBreakNow()
         #expect(service.state == .onBreak)
@@ -129,7 +126,7 @@ struct TimerServiceTests {
 
     @Test func testTogglePause() throws {
         let ctx = try makeTestModelContext()
-        let (service, _, _, _, _, _) = makeTimerService(modelContext: ctx)
+        let (service, _, _, _, _) = makeTimerService(modelContext: ctx)
         service.start()
         #expect(service.state == .working)
         service.togglePause()
@@ -139,26 +136,11 @@ struct TimerServiceTests {
         service.stop()
     }
 
-    // MARK: 6. DND active + respectDND prevents timer advancement
-
-    @Test func testDNDPausesTimerWhenEnabled() async throws {
-        let ctx = try makeTestModelContext()
-        let (service, settings, _, _, _, dnd) = makeTimerService(workInterval: 60, modelContext: ctx)
-        settings.respectDND = true
-        dnd.isDoNotDisturbActive = true
-        service.start()
-        let initial = service.timeUntilBreak
-        try await Task.sleep(for: .seconds(2.5))
-        // Timer should not advance while DND is active
-        #expect(service.timeUntilBreak == initial)
-        service.stop()
-    }
-
     // MARK: 7. Sound plays on break start
 
     @Test func testSoundPlaysOnBreakStart() throws {
         let ctx = try makeTestModelContext()
-        let (service, _, sound, _, _, _) = makeTimerService(modelContext: ctx)
+        let (service, _, sound, _, _) = makeTimerService(modelContext: ctx)
         service.start()
         service.takeBreakNow()
         #expect(sound.breakStartCount == 1)
@@ -170,7 +152,7 @@ struct TimerServiceTests {
     @Test func testSoundPlaysOnBreakEnd() async throws {
         let ctx = try makeTestModelContext()
         // Short break so it ends naturally
-        let (service, _, sound, _, _, _) = makeTimerService(workInterval: 2, breakDuration: 2, modelContext: ctx)
+        let (service, _, sound, _, _) = makeTimerService(workInterval: 2, breakDuration: 2, modelContext: ctx)
         service.start()
         try await Task.sleep(for: .seconds(5))
         // Service went: working -> onBreak -> working; break-end sound fired once
@@ -182,7 +164,7 @@ struct TimerServiceTests {
 
     @Test func testRecordBreakSavesToSwiftData() throws {
         let ctx = try makeTestModelContext()
-        let (service, _, _, _, _, _) = makeTimerService(modelContext: ctx)
+        let (service, _, _, _, _) = makeTimerService(modelContext: ctx)
         service.start()
         service.takeBreakNow()
         service.skipBreak()  // skipped == true, triggers recordBreak
@@ -197,7 +179,7 @@ struct TimerServiceTests {
 
     @Test func testTipRotation() throws {
         let ctx = try makeTestModelContext()
-        let (service, _, _, _, _, _) = makeTimerService(modelContext: ctx)
+        let (service, _, _, _, _) = makeTimerService(modelContext: ctx)
         service.start()
 
         var observedTips: Set<String> = []

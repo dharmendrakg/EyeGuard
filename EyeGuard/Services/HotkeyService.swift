@@ -33,7 +33,10 @@ final class HotkeyService: HotkeyManaging {
     private var registeredHotkeys: [HotkeyAction: EventHotKeyRef] = [:]
 
     /// Singleton reference used by the C callback to route events back to this instance.
-    private static var activeInstance: HotkeyService?
+    /// Kept weak because `HotkeyService` is owned for its full lifetime by `@State` in
+    /// `EyeGuardApp`; a strong static reference here is unnecessary and would prevent
+    /// deallocation if the ownership model ever changes.
+    private static weak var activeInstance: HotkeyService?
 
     // MARK: - Four-character signature for EventHotKeyID
 

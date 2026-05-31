@@ -11,7 +11,7 @@ final class IdleDetector: IdleDetecting {
 
     func start() {
         let t = DispatchSource.makeTimerSource(queue: .main)
-        t.schedule(deadline: .now(), repeating: Constants.Timer.idlePollInterval)
+        t.schedule(deadline: .now(), repeating: Constants.Timer.idlePollInterval, leeway: .seconds(5))
         t.setEventHandler { [weak self] in
             self?.poll()
         }

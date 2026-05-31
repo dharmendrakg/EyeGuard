@@ -17,8 +17,8 @@ struct MenuBarView: View {
             // Actions
             Group {
                 menuButton(
-                    title: timerService.state == .paused ? "Resume Timer" : "Pause Timer",
-                    icon: timerService.state == .paused ? "play.fill" : "pause.fill",
+                    title: (timerService.state == .paused || timerService.state == .idle) ? "Resume Timer" : "Pause Timer",
+                    icon: (timerService.state == .paused || timerService.state == .idle) ? "play.fill" : "pause.fill",
                     shortcut: "p"
                 ) {
                     timerService.togglePause()

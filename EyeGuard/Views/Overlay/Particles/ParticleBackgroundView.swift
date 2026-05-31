@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ParticleBackgroundView: View {
     let theme: OverlayTheme
@@ -12,8 +13,14 @@ struct ParticleBackgroundView: View {
         // firing the TimelineView at display-refresh rate (60 Hz) for no visual output.
         if theme == .minimal {
             Color.clear
+        } else if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            // When the user has enabled "Reduce Motion" in System Settings, skip particles
+            // entirely — a static tint is sufficient and avoids GPU work during breaks.
+            Color.clear
         } else {
-            TimelineView(.animation) { timeline in
+            // Cap to 30 fps — particle motion is perceptually indistinguishable at 30 vs
+            // 60 fps for slow-drifting elements, and halves GPU load per screen.
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                 Canvas(opaque: false, colorMode: .linear, rendersAsynchronously: true) { context, size in
                     guard let config = cachedConfig else { return }
                     // Wrap elapsed to a 10-minute window (defensive: break overlays are ≤30 s).
@@ -40,6 +47,10 @@ struct ParticleBackgroundView: View {
 
     // MARK: - Setup (runs once per theme, not per frame)
 
+    // Per-screen particle budget. Limits GPU work on multi-screen setups without
+    // altering single-screen themes that are already under this threshold.
+    private static let perScreenParticleBudget = 60
+
     private func initializeParticles() {
         startDate = .now
         let config = ParticleConfig.config(for: theme)
@@ -48,7 +59,12 @@ struct ParticleBackgroundView: View {
             particles = []
             return
         }
-        particles = Particle.makeParticles(config: config)
+        // Apply per-screen budget cap: rain (120) and starfield (80) exceed it.
+        // Trimming the prefix preserves RNG consistency for the kept particles.
+        let all = Particle.makeParticles(config: config)
+        particles = all.count > Self.perScreenParticleBudget
+            ? Array(all.prefix(Self.perScreenParticleBudget))
+            : all
     }
 
     // MARK: - Direction-specific draw loops (no per-particle branching)

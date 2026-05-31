@@ -32,6 +32,10 @@ final class OverlayManager: OverlayPresenting {
             }, completionHandler: {
                 panelsToHide.forEach {
                     $0.alphaValue = 1
+                    // Eagerly release the NSHostingView hierarchy before ordering out.
+                    // This prevents multi-MB SwiftUI view hierarchies from lingering in
+                    // memory until the NSPanel's dealloc on multi-screen setups.
+                    $0.contentView = nil
                     $0.orderOut(nil)
                 }
             })

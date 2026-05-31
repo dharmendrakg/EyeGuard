@@ -43,7 +43,13 @@ final class NotificationManager: NotificationScheduling {
                 content: content,
                 trigger: trigger
             )
-            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+            UNUserNotificationCenter.current().add(request) { [weak self] error in
+                if let error {
+                    Task { @MainActor in
+                        self?.logger.error("Failed to schedule break-warning notification: \(error.localizedDescription)")
+                    }
+                }
+            }
         }
     }
 

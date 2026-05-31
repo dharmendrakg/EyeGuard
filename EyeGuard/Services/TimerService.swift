@@ -39,7 +39,6 @@ final class TimerService: TimerControlling {
         let overlayManager: any OverlayPresenting
         let soundManager: any SoundPlaying
         let notificationManager: any NotificationScheduling
-        let dndObserver: any DNDChecking
         let modelContext: ModelContext
         let idleDetector: any IdleDetecting
         /// The UserDefaults suite for persisting timer state. Use `.standard` in production;
@@ -79,7 +78,10 @@ final class TimerService: TimerControlling {
         guard state == .working, deps != nil else { return 0 }
         let total = effectiveWorkInterval
         guard total > 0 else { return 0 }
-        return timeUntilBreak / total
+        // Quantize to 1% steps so the menu bar ring redraws ~100 times per cycle
+        // instead of every second (~1200 times for a 20-minute interval).
+        // Sub-pixel difference at 18 px ring diameter — visually indistinguishable.
+        return (timeUntilBreak / total * 100).rounded() / 100
     }
 
     // MARK: - Pomodoro computed properties
@@ -109,19 +111,6 @@ final class TimerService: TimerControlling {
         return isNextBreakLong
             ? deps.settings.pomodoroLongBreak
             : deps.settings.pomodoroShortBreak
-    }
-
-    private static let breakTimeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
-    /// Clock time when the next break will occur (e.g. "1:59 PM"), nil when not working
-    var nextBreakClockTime: String? {
-        guard state == .working, timeUntilBreak > 0 else { return nil }
-        let breakDate = Date.now.addingTimeInterval(timeUntilBreak)
-        return Self.breakTimeFormatter.string(from: breakDate)
     }
 
     var statusText: String {
@@ -184,11 +173,17 @@ final class TimerService: TimerControlling {
 
     func togglePause() {
         switch state {
-        case .paused:
+        case .paused, .idle:
             state = .working
+            // Restart idle detection before resuming the work timer so any current
+            // idle state is immediately evaluated on the first tick.
+            idleDetector.start()
             startWorkTimer()
         case .working:
             cancelTimers()
+            // Stop idle polling while paused — user-initiated pause doesn't need
+            // idle detection, eliminating unnecessary 30-second CPU wakeups.
+            idleDetector.stop()
             state = .paused
         default:
             break
@@ -221,7 +216,7 @@ final class TimerService: TimerControlling {
     }
 
     func takeBreakNow() {
-        guard state == .working || state == .paused else { return }
+        guard state == .working || state == .paused || state == .idle else { return }
         cancelTimers()
         triggerBreak()
     }
@@ -239,7 +234,7 @@ final class TimerService: TimerControlling {
         state = .working
         lastKnownWorkInterval = effectiveWorkInterval
         let t = DispatchSource.makeTimerSource(queue: .main)
-        t.schedule(deadline: .now() + 1, repeating: 1.0)
+        t.schedule(deadline: .now() + 1, repeating: 1.0, leeway: .milliseconds(100))
         t.setEventHandler { [weak self] in
             self?.workTick()
         }
@@ -250,7 +245,6 @@ final class TimerService: TimerControlling {
     private func workTick() {
         syncIdleThreshold()
         guard !handleIdleTransition() else { return }
-        guard !isDNDBlocking() else { return }
 
         handleIntervalChange()
 
@@ -282,7 +276,15 @@ final class TimerService: TimerControlling {
     private func handleIdleTransition() -> Bool {
         if idleDetector.isIdle {
             if state != .idle {
-                cancelTimers()
+                // If on break, cancel the break timer and hide the overlay
+                if state == .onBreak {
+                    breakTimer?.cancel()
+                    breakTimer = nil
+                    dependencies.overlayManager.hideOverlay()
+                }
+                // Keep workTimer alive so this handler keeps polling for idle-end.
+                // Only cancelTimers() would kill workTimer, which would make the
+                // idle-resume branch below unreachable.
                 state = .idle
             }
             return true
@@ -295,11 +297,6 @@ final class TimerService: TimerControlling {
             return true
         }
         return false
-    }
-
-    /// Returns `true` when DND is active and the timer should not advance.
-    private func isDNDBlocking() -> Bool {
-        dependencies.settings.respectDND && dependencies.dndObserver.isDoNotDisturbActive
     }
 
     /// Detects mid-cycle work interval changes (A6) and recalculates `timeUntilBreak`.
@@ -352,7 +349,7 @@ final class TimerService: TimerControlling {
         dependencies.overlayManager.showOverlay(config: config, timerService: self)
 
         let t = DispatchSource.makeTimerSource(queue: .main)
-        t.schedule(deadline: .now() + 1, repeating: 1.0)
+        t.schedule(deadline: .now() + 1, repeating: 1.0, leeway: .milliseconds(100))
         t.setEventHandler { [weak self] in
             self?.breakTick()
         }

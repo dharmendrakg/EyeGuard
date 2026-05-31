@@ -21,7 +21,12 @@ struct StreakView: View {
                 .foregroundStyle(.secondary)
         }
         .onAppear { cachedStreak = computeStreak() }
-        .onChange(of: summaries.map(\.breaksTaken)) { cachedStreak = computeStreak() }
+        // Trigger recomputation when a new summary is added (count change) or when
+        // today's summary updates its breaksTaken (e.g. mid-session). Using two
+        // lightweight scalar values avoids the per-evaluation [Int] array allocation
+        // that `.onChange(of: summaries.map(\.breaksTaken))` would produce.
+        .onChange(of: summaries.count) { cachedStreak = computeStreak() }
+        .onChange(of: summaries.first?.breaksTaken) { cachedStreak = computeStreak() }
     }
 
     private func computeStreak() -> Int {

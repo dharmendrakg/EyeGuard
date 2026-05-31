@@ -14,7 +14,6 @@ struct EyeGuardApp: App {
     @State private var overlayManager = OverlayManager()
     @State private var soundManager = SoundManager()
     @State private var notificationManager = NotificationManager()
-    @State private var dndObserver = DNDObserver()
     @State private var hotkeyService = HotkeyService()
     @State private var loginItemManager = LoginItemManager()
     @State private var servicesWired = false
@@ -59,7 +58,7 @@ struct EyeGuardApp: App {
                     wireServices()
                 }
         } label: {
-            MenuBarIconView(state: timerService.state, progress: timerService.workProgress, nextBreakTime: timerService.nextBreakClockTime)
+            MenuBarIconView(state: timerService.state, progress: timerService.workProgress)
         }
         .menuBarExtraStyle(.window)
 
@@ -82,14 +81,12 @@ struct EyeGuardApp: App {
             overlayManager: overlayManager,
             soundManager: soundManager,
             notificationManager: notificationManager,
-            dndObserver: dndObserver,
             modelContext: modelContainer.mainContext,
             idleDetector: idleDetector,
             defaults: .standard
         ))
 
         notificationManager.requestPermission()
-        dndObserver.start()
         timerService.start()
 
         hotkeyService.configure(settings: settings, timerService: timerService)
