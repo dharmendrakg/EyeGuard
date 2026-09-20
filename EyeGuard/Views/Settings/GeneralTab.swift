@@ -22,7 +22,7 @@ struct GeneralTab: View {
 
             Section("Overlay") {
                 Toggle("Show text and icons on overlay", isOn: $settings.showOverlayElements)
-                    .help("When off, the overlay shows only the background tint and particles without any text, timer, or icons.")
+                    .help("When off, the overlay shows only the background tint without any text, timer, or icons.")
             }
         }
         .formStyle(.grouped)

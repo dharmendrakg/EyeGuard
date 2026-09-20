@@ -3,7 +3,6 @@ import SwiftUI
 struct OverlayContentView: View {
     let config: BreakOverlayConfig
     @State private var opacity: Double = 0
-    @State private var iconPulse: Bool = false
 
     // NOTE: timerService and settings are passed as plain properties (not via @Environment)
     // because this view is hosted via NSHostingView in OverlayManager.createPanels().
@@ -16,27 +15,19 @@ struct OverlayContentView: View {
 
     var body: some View {
         ZStack {
-            // Layer 1: Blur background (fades out at low opacity to allow true transparency)
-            VisualEffectBlur()
-                .ignoresSafeArea()
-                .opacity(min(1.0, max(0.0, (config.opacity - 0.05) / 0.25)))
-
-            // Layer 2: Semi-transparent overlay (user-controlled opacity)
+            // Semi-transparent overlay scrim (user-controlled opacity)
             Color.black.opacity(config.opacity)
                 .ignoresSafeArea()
 
-            // Layer 3: Animated particles (always visible, independent of content toggle)
-            ParticleBackgroundView(theme: config.theme)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea()
-
-            // Layer 4: Break content (opacity-hidden to preserve view identity and avoid
-            // disrupting sibling views like ParticleBackgroundView)
+            // Break content
             VStack(spacing: 0) {
                 Spacer()
                 headerView
                 Spacer().frame(height: 28)
-                breakTimerSection
+                BreakTimerSectionView(
+                    timerService: timerService,
+                    config: config
+                )
                 Spacer()
             }
             .padding(.horizontal, 60)
@@ -54,7 +45,6 @@ struct OverlayContentView: View {
             withAnimation(.easeIn(duration: 0.4)) {
                 opacity = 1.0
             }
-            iconPulse = true
         }
     }
 
@@ -72,12 +62,6 @@ struct OverlayContentView: View {
                         endPoint: .bottom
                     )
                 )
-                .scaleEffect(iconPulse ? 1.05 : 1.0)
-                .opacity(iconPulse ? 1.0 : 0.85)
-                .animation(
-                    .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                    value: iconPulse
-                )
 
             Text("Time for an Eye Break")
                 .font(.system(size: 30, weight: .semibold, design: .rounded))
@@ -85,44 +69,50 @@ struct OverlayContentView: View {
         }
     }
 
-    /// Countdown ring, instruction text, and health tip card.
-    private var breakTimerSection: some View {
-        VStack(spacing: 0) {
-            BreakTimerView(
-                timeRemaining: timerService.breakTimeRemaining,
-                totalDuration: config.duration
-            )
+    /// Countdown ring, instruction text, and health tip card isolated in a dedicated subview.
+    /// This prevents 1-second timer tick updates from invalidating OverlayContentView.
+    private struct BreakTimerSectionView: View {
+        let timerService: any TimerControlling
+        let config: BreakOverlayConfig
 
-            Spacer().frame(height: 32)
+        var body: some View {
+            VStack(spacing: 0) {
+                BreakTimerView(
+                    timeRemaining: timerService.breakTimeRemaining,
+                    totalDuration: config.duration
+                )
 
-            // Primary action instruction
-            Text("Look at something 20 feet away")
-                .font(.system(size: 20, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.95))
-                .padding(.bottom, 16)
+                Spacer().frame(height: 32)
 
-            tipCardView
+                // Primary action instruction
+                Text("Look at something 20 feet away")
+                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.95))
+                    .padding(.bottom, 16)
+
+                tipCardView
+            }
         }
-    }
 
-    /// Contextual eye-health tip in a subtle rounded container.
-    private var tipCardView: some View {
-        Text(config.tip)
-            .font(.system(size: 15, weight: .regular))
-            .foregroundStyle(.white.opacity(0.75))
-            .multilineTextAlignment(.center)
-            .lineSpacing(3)
-            .frame(maxWidth: 440)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(.white.opacity(0.1), lineWidth: 0.5)
-                    )
-            )
+        /// Contextual eye-health tip in a subtle rounded container.
+        private var tipCardView: some View {
+            Text(config.tip)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundStyle(.white.opacity(0.75))
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .frame(maxWidth: 440)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.white.opacity(0.06))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(.white.opacity(0.1), lineWidth: 0.5)
+                        )
+                )
+        }
     }
 
     /// Snooze and skip buttons anchored to the bottom of the overlay.
@@ -158,17 +148,4 @@ struct OverlayContentView: View {
             .padding(.bottom, 40)
         }
     }
-}
-
-/// NSVisualEffectView wrapper for SwiftUI
-struct VisualEffectBlur: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let v = NSVisualEffectView()
-        v.material = .fullScreenUI
-        v.blendingMode = .behindWindow
-        v.state = .active
-        return v
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }

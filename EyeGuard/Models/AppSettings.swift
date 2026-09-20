@@ -47,10 +47,6 @@ final class AppSettings {
         didSet { persist(launchAtLogin, forKey: Constants.UserDefaultsKeys.launchAtLogin) }
     }
 
-    var overlayTheme: OverlayTheme {
-        didSet { persist(overlayTheme.rawValue, forKey: Constants.UserDefaultsKeys.overlayTheme) }
-    }
-
     var breakStartSound: BreakSound {
         didSet { persist(breakStartSound.rawValue, forKey: Constants.UserDefaultsKeys.breakStartSound) }
     }
@@ -167,8 +163,6 @@ final class AppSettings {
         self.soundEnabled = defaults.object(forKey: Constants.UserDefaultsKeys.soundEnabled) as? Bool ?? true
         self.notificationEnabled = defaults.object(forKey: Constants.UserDefaultsKeys.notificationEnabled) as? Bool ?? true
         self.launchAtLogin = defaults.object(forKey: Constants.UserDefaultsKeys.launchAtLogin) as? Bool ?? false
-        self.overlayTheme = OverlayTheme(rawValue:
-            defaults.string(forKey: Constants.UserDefaultsKeys.overlayTheme) ?? "") ?? .minimal
         self.breakStartSound = BreakSound(rawValue:
             defaults.string(forKey: Constants.UserDefaultsKeys.breakStartSound) ?? "") ?? .glass
         self.breakEndSound = BreakSound(rawValue:

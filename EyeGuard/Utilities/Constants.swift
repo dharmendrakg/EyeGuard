@@ -25,7 +25,6 @@ enum Constants {
         static let launchAtLogin = "launchAtLogin"
         static let elapsedWorkTime = "elapsedWorkTime"
         static let tipIndex = "tipIndex"
-        static let overlayTheme = "overlayTheme"
         static let overlayOpacity = "overlayOpacity"
         static let showSkipButton = "showSkipButton"
         static let showOverlayElements = "showOverlayElements"

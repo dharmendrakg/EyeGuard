@@ -6,7 +6,6 @@ import Foundation
 struct BreakOverlayConfig {
     let tip: String
     let duration: TimeInterval
-    let theme: OverlayTheme
     let opacity: Double
     let showElements: Bool
     let showSnoozeButton: Bool
@@ -17,7 +16,6 @@ struct BreakOverlayConfig {
     init(tip: String, duration: TimeInterval, settings: AppSettings) {
         self.tip = tip
         self.duration = duration
-        self.theme = settings.overlayTheme
         self.opacity = settings.overlayOpacity
         self.showElements = settings.showOverlayElements
         self.showSnoozeButton = settings.showSnoozeButton

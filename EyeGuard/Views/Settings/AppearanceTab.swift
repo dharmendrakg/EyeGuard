@@ -8,9 +8,8 @@ struct AppearanceTab: View {
         @Bindable var settings = settings
 
         VStack(alignment: .leading, spacing: 20) {
-            // MARK: Theme picker
             HStack {
-                Text("Overlay Theme")
+                Text("Overlay Darkness")
                     .font(.headline)
                 Spacer()
                 Button(action: { timerService.takeBreakNow() }) {
@@ -21,23 +20,9 @@ struct AppearanceTab: View {
                 .controlSize(.small)
             }
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 12) {
-                ForEach(OverlayTheme.allCases) { theme in
-                    ThemeCard(
-                        theme: theme,
-                        isSelected: settings.overlayTheme == theme
-                    )
-                    .onTapGesture {
-                        settings.overlayTheme = theme
-                    }
-                }
-            }
-
-            Divider()
-
-            // MARK: Opacity slider
-            Text("Overlay Opacity")
-                .font(.headline)
+            Text("Adjust the darkness level of the screen overlay during eye breaks. EyeGuard uses a lightweight, calm backdrop to minimize CPU and battery usage.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -54,39 +39,9 @@ struct AppearanceTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Spacer()
         }
         .padding(20)
-    }
-}
-
-// MARK: - ThemeCard
-
-private struct ThemeCard: View {
-    let theme: OverlayTheme
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: theme.iconName)
-                .font(.system(size: 28))
-                .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
-                .frame(height: 36)
-
-            Text(theme.displayName)
-                .font(.caption)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isSelected ? Color.accentColor.opacity(0.12) : Color(nsColor: .quaternaryLabelColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
-        )
     }
 }

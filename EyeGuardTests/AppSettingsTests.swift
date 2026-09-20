@@ -19,6 +19,7 @@ struct AppSettingsTests {
         #expect(settings.workInterval == Constants.Timer.defaultWorkInterval)
         #expect(settings.breakDuration == Constants.Timer.defaultBreakDuration)
         #expect(settings.idleThreshold == Constants.Timer.defaultIdleThreshold)
+        #expect(settings.overlayOpacity == 0.45)
         suite.removePersistentDomain(forName: suiteName)
     }
 
@@ -59,15 +60,24 @@ struct AppSettingsTests {
         suite.removePersistentDomain(forName: suiteName)
     }
 
-    // MARK: 5. Overlay theme raw-value round-trips
+    // MARK: 5. Overlay opacity persists and clamps
 
-    @Test func testOverlayThemePersists() {
-        let suiteName = "AppSettingsTests.theme.\(UUID().uuidString)"
+    @Test func testOverlayOpacityPersistsAndClamps() {
+        let suiteName = "AppSettingsTests.opacity.\(UUID().uuidString)"
         let suite = UserDefaults(suiteName: suiteName)!
         let settings = AppSettings(defaults: suite)
-        settings.overlayTheme = .starfield
-        let raw = suite.string(forKey: Constants.UserDefaultsKeys.overlayTheme)
-        #expect(raw == OverlayTheme.starfield.rawValue)
+        settings.overlayOpacity = 0.75
+        let stored = suite.double(forKey: Constants.UserDefaultsKeys.overlayOpacity)
+        #expect(stored == 0.75)
+
+        // Verify clamping below 0.05
+        settings.overlayOpacity = 0.01
+        #expect(settings.overlayOpacity == 0.05)
+
+        // Verify clamping above 0.90
+        settings.overlayOpacity = 1.0
+        #expect(settings.overlayOpacity == 0.90)
+
         suite.removePersistentDomain(forName: suiteName)
     }
 }

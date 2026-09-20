@@ -20,7 +20,6 @@ struct TimerProgressView: View {
                 .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .frame(width: 36, height: 36)
                 .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 1), value: progress)
 
             Text(timeRemaining.minuteSecondDisplay)
                 .font(.system(size: 9, weight: .medium, design: .rounded))

@@ -20,7 +20,6 @@ struct BreakTimerView: View {
                 .stroke(Color.white, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .frame(width: 120, height: 120)
                 .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 1), value: progress)
 
             VStack(spacing: 2) {
                 Text(timeRemaining.minuteSecondDisplay)

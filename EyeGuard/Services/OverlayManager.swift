@@ -59,9 +59,10 @@ final class OverlayManager: OverlayPresenting {
                 timerService: timerService
             )
             panel.contentView = NSHostingView(rootView: contentView)
-            panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
             panels.append(panel)
         }
+        panels.first?.makeKey()
     }
 
     private func registerScreenObserver(config: BreakOverlayConfig, timerService: any TimerControlling) {

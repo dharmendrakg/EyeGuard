@@ -129,7 +129,6 @@ EyeGuard/
 │   ├── AppSettings.swift       # All user preferences, UserDefaults-backed
 │   ├── BreakSession.swift      # SwiftData @Model — individual break records (wasDeferred, tipShown)
 │   ├── DailySummary.swift      # SwiftData @Model — daily break aggregates (breaksDeferred)
-│   ├── OverlayTheme.swift      # 8 theme variants (String raw-value enum)
 │   ├── BreakSound.swift        # Enum of 15 macOS system sounds for break alerts
 │   ├── HotkeyAction.swift      # Enum: takeBreak, togglePause, skipBreak (with carbonID)
 │   └── KeyCombo.swift          # Codable struct: key code + Carbon modifier flags + displayString
@@ -155,10 +154,7 @@ EyeGuard/
 │   ├── Overlay/
 │   │   ├── OverlayPanel.swift          # NSPanel subclass at .screenSaver level
 │   │   ├── OverlayContentView.swift    # Root SwiftUI view for the overlay
-│   │   ├── BreakTimerView.swift        # Countdown and tip display
-│   │   └── Particles/
-│   │       ├── ParticleSystem.swift
-│   │       └── ParticleBackgroundView.swift
+│   │   └── BreakTimerView.swift        # Countdown and tip display
 │   ├── Settings/
 │   │   ├── SettingsView.swift          # Tab container (General, Sounds, Timer, Appearance, Shortcuts, About)
 │   │   ├── GeneralTab.swift
